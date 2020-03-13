@@ -1,12 +1,20 @@
 {
   "name": "oj-ajax",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "homepage": "https://www.orange-juice.nl",
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/orange-juice-nl/oj-ajax.git"
+    "type": "git",
+    "url": "https://github.com/orange-juice-nl/oj-ajax.git"
   },
-  "keywords": ["ajax","get","post","http","fetch", "request", "response"],
+  "keywords": [
+    "ajax",
+    "get",
+    "post",
+    "http",
+    "fetch",
+    "request",
+    "response"
+  ],
   "description": "Common IE11 compatible network request methods",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
