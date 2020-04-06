@@ -2,36 +2,48 @@
 Network request utils
 IE11 compatible 
 
+## Types
+### Data
+```typescript
+string | FormData | Document | Blob | ArrayBufferView | ArrayBuffer | URLSearchParams
+```
+### IXHROptions 
+```typescript
+{
+  data?: Data,
+  headers?: { [k: string]: string },
+  responseType?: XMLHttpRequestResponseType,
+  progress?: (p: number) => void
+}
+```
+
 ## request
-`request(method: string, url: string, data?: any, contentType?: string, raw?: boolean): Promise<any>`
+`request<T>(method: string, url: string, options: IXHROptions = {}): Promise<T>`
 - opens a new XMLHttpRequest and uses the onload event to resolve or reject te promise
-- **if raw === true** it will return the xhr object, not the xhr.response text
 
 ## get
-`get(url: string, contentType?: string, raw?: boolean): Promise<any>`
-- a shorthand for request (`method: "GET"`)
-
-## getJSON
-`<T>get(url: string): Promise<T>`
-- a shorthand for get (`contentType: "application/json;charset=UTF-8"`)
-- parses the response with `JSON.parse()`
+`get<T>(url: string, options: Omit<IXHROptions, "data"> = {}): Promise<T>`
 
 ## post
-`post(url: string, data: any, contentType?: string, raw?: boolean): Promise<any>`
-- a shorthand for request (`method: "POST"`)
+`post<T>(url: string, data: Data, options: IXHROptions = {}): Promise<T>`
+
+## getJSON
+`getJSON<T>(url: string, options: IXHROptions = {}): Promise<T | string>`
+- parses the response with `JSON.parse()`
+- if parsing has failed, the response will be returned as a string
 
 ## postJSON
-`postJSON(url: string, data: any, raw?: boolean): Promise<any>`
-- a shorthand for post (`contentType: "application/json;charset=UTF-8"`)
-- parses the data with `JSON.stringify()`
+`postJSON<T extends Object, I extends Object>(url: string, data: I, options: Omit<IXHROptions, "data">): Promise<T | string>`
+- stringifies the data with `JSON.stringify()`
+- parses the response with `JSON.parse()`
+- if parsing has failed, the response will be returned as a string
 
 ## postForm
-`postForm(url: string, data: HTMLFormElement, raw?: boolean): Promise<any>`
-- a shorthand for post
-- parses the data with `new FormData(data)`
+`postForm<T>(url: string, data: HTMLFormElement, options: Omit<IXHROptions, "data"> = {}) : Promise<T>`
+- gatheres all input fields within the form element as FormData
 
 ## poll
-`poll(url: string, rate: number = 200, check: (res: any) => boolean): Promise<any>`
+`poll<T>(url: string, rate: number = 200, check: (res: T) => boolean): Promise<T>`
 - polls the url with the getJSON method
 - the response gets delegated to the check callback
 - when check returns true the poll is resolved

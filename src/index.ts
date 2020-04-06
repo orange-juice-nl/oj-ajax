@@ -1,43 +1,49 @@
 export type Data = string | FormData | Document | Blob | ArrayBufferView | ArrayBuffer | URLSearchParams
+export interface IXHROptions {
+  data?: Data,
+  headers?: { [k: string]: string },
+  responseType?: XMLHttpRequestResponseType,
+  progress?: (p: number) => void
+}
 
-export const requestRaw = (method: string, url: string, data?: Data, contentType?: string, responseType?: string, progress?: (p: number) => void) =>
+const requestRaw = (method: string, url: string, options: IXHROptions = {}) =>
   new Promise<XMLHttpRequest>((res, rej) => {
     let upProgress = 0
     let downProgress = 0
-    const emitProgress = () => typeof progress === "function" && progress((upProgress + downProgress) * .5)
+    const emitProgress = () => typeof options.progress === "function" && options.progress((upProgress + downProgress) * .5)
 
     const xhr = new XMLHttpRequest()
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) res(xhr)
       else rej(xhr)
     }
-    if (typeof progress === "function") {
+    if (typeof options.progress === "function") {
       if (xhr.upload) xhr.upload.onprogress = e => { upProgress = Math.ceil((e.loaded / e.total) * 100); emitProgress() }
       xhr.onprogress = e => { downProgress = Math.ceil((e.loaded / e.total) * 100); emitProgress() }
     }
     xhr.onerror = () => rej(xhr)
     xhr.open(method, url, true)
-    if (contentType) xhr.setRequestHeader('Content-Type', contentType)
-    if (responseType) xhr.setRequestHeader('Response-Type', responseType)
-    xhr.send(data)
+    if (options.responseType)
+      xhr.responseType = options.responseType
+    if (options.headers)
+      Object.keys(options.headers).forEach(k =>
+        xhr.setRequestHeader(k, options.headers[k]))
+    xhr.send(options.data)
   })
 
-export const request = <T>(method: string, url: string, data?: Data, contentType?: string, responseType?: string, progress?: (p: number) => void): Promise<T> =>
-  requestRaw(method, url, data, contentType, responseType, progress)
+export const request = <T>(method: string, url: string, options: IXHROptions = {}): Promise<T> =>
+  requestRaw(method, url, options)
     .then(xhr => xhr.response || xhr.responseText)
     .catch(xhr => ({ status: xhr.status, statusText: xhr.statusText }))
 
-export const get = <T>(url: string, options: { contentType?: string, responseType?: string, progress?: (p: number) => void } = {}) =>
-  request<T>("GET", url, undefined, options.contentType, options.responseType, options.progress)
+export const get = <T>(url: string, options: Omit<IXHROptions, "data"> = {}) =>
+  request<T>("GET", url, options)
 
-export const post = <T>(url: string, data: Data, options: { contentType?: string, responseType?: string, progress?: (p: number) => void } = {}) =>
-  request<T>("POST", url, data, options.contentType, options.responseType, options.progress)
+export const post = <T>(url: string, data: Data, options: IXHROptions = {}) =>
+  request<T>("POST", url, { ...options, data })
 
-export const getJSON = <T>(url: string, options: { progress?: (p: number) => void } = {}) =>
-  get<string>(url, { ...options, contentType: "application/json;charset=UTF-8" }).then(x => JSON.parse(x) as T)
-
-export const postJSON = async <T extends Object>(url: string, data: T, options: { progress?: (p: number) => void } = {}) => {
-  const r = await post<string>(url, JSON.stringify(data), { ...options, contentType: "application/json;charset=UTF-8" })
+export const getJSON = async <T>(url: string, options: IXHROptions = {}) : Promise<T | string> => {
+  const r = await get<string>(url, { ...options, headers: { ...(options.headers || {}), "Content-Type": "application/json;charset=UTF-8" } })
   try {
     return JSON.parse(r)
   } catch (err) {
@@ -45,8 +51,17 @@ export const postJSON = async <T extends Object>(url: string, data: T, options: 
   }
 }
 
-export const postForm = async (url: string, data: HTMLFormElement, options: { progress?: (p: number) => void } = {}) =>
-  post(url, new FormData(data), options)
+export const postJSON = async <T extends Object, I extends Object>(url: string, data: I, options: Omit<IXHROptions, "data">): Promise<T | string> => {
+  const r = await post<string>(url, JSON.stringify(data), { ...options, headers: { ...(options.headers || {}), "Content-Type": "application/json;charset=UTF-8" } })
+  try {
+    return JSON.parse(r)
+  } catch (err) {
+    return r
+  }
+}
+
+export const postForm = <T>(url: string, data: HTMLFormElement, options: Omit<IXHROptions, "data"> = {}) =>
+  post<T>(url, new FormData(data), options)
 
 export const poll = <T>(url: string, rate: number = 200, check: (res: T) => boolean) =>
   new Promise<T>(async (resolve, reject) => {

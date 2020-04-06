@@ -47,11 +47,12 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.requestRaw = function (method, url, data, contentType, responseType, progress) {
+var requestRaw = function (method, url, options) {
+    if (options === void 0) { options = {}; }
     return new Promise(function (res, rej) {
         var upProgress = 0;
         var downProgress = 0;
-        var emitProgress = function () { return typeof progress === "function" && progress((upProgress + downProgress) * .5); };
+        var emitProgress = function () { return typeof options.progress === "function" && options.progress((upProgress + downProgress) * .5); };
         var xhr = new XMLHttpRequest();
         xhr.onload = function () {
             if (xhr.status >= 200 && xhr.status < 300)
@@ -59,44 +60,43 @@ exports.requestRaw = function (method, url, data, contentType, responseType, pro
             else
                 rej(xhr);
         };
-        if (typeof progress === "function") {
+        if (typeof options.progress === "function") {
             if (xhr.upload)
                 xhr.upload.onprogress = function (e) { upProgress = Math.ceil((e.loaded / e.total) * 100); emitProgress(); };
             xhr.onprogress = function (e) { downProgress = Math.ceil((e.loaded / e.total) * 100); emitProgress(); };
         }
         xhr.onerror = function () { return rej(xhr); };
         xhr.open(method, url, true);
-        if (contentType)
-            xhr.setRequestHeader('Content-Type', contentType);
-        if (responseType)
-            xhr.setRequestHeader('Response-Type', responseType);
-        xhr.send(data);
+        if (options.responseType)
+            xhr.responseType = options.responseType;
+        if (options.headers)
+            Object.keys(options.headers).forEach(function (k) {
+                return xhr.setRequestHeader(k, options.headers[k]);
+            });
+        xhr.send(options.data);
     });
 };
-exports.request = function (method, url, data, contentType, responseType, progress) {
-    return exports.requestRaw(method, url, data, contentType, responseType, progress)
+exports.request = function (method, url, options) {
+    if (options === void 0) { options = {}; }
+    return requestRaw(method, url, options)
         .then(function (xhr) { return xhr.response || xhr.responseText; })
         .catch(function (xhr) { return ({ status: xhr.status, statusText: xhr.statusText }); });
 };
 exports.get = function (url, options) {
     if (options === void 0) { options = {}; }
-    return exports.request("GET", url, undefined, options.contentType, options.responseType, options.progress);
+    return exports.request("GET", url, options);
 };
 exports.post = function (url, data, options) {
     if (options === void 0) { options = {}; }
-    return exports.request("POST", url, data, options.contentType, options.responseType, options.progress);
+    return exports.request("POST", url, __assign(__assign({}, options), { data: data }));
 };
 exports.getJSON = function (url, options) {
-    if (options === void 0) { options = {}; }
-    return exports.get(url, __assign(__assign({}, options), { contentType: "application/json;charset=UTF-8" })).then(function (x) { return JSON.parse(x); });
-};
-exports.postJSON = function (url, data, options) {
     if (options === void 0) { options = {}; }
     return __awaiter(void 0, void 0, void 0, function () {
         var r;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, exports.post(url, JSON.stringify(data), __assign(__assign({}, options), { contentType: "application/json;charset=UTF-8" }))];
+                case 0: return [4 /*yield*/, exports.get(url, __assign(__assign({}, options), { headers: __assign(__assign({}, (options.headers || {})), { "Content-Type": "application/json;charset=UTF-8" }) }))];
                 case 1:
                     r = _a.sent();
                     try {
@@ -110,11 +110,26 @@ exports.postJSON = function (url, data, options) {
         });
     });
 };
+exports.postJSON = function (url, data, options) { return __awaiter(void 0, void 0, void 0, function () {
+    var r;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, exports.post(url, JSON.stringify(data), __assign(__assign({}, options), { headers: __assign(__assign({}, (options.headers || {})), { "Content-Type": "application/json;charset=UTF-8" }) }))];
+            case 1:
+                r = _a.sent();
+                try {
+                    return [2 /*return*/, JSON.parse(r)];
+                }
+                catch (err) {
+                    return [2 /*return*/, r];
+                }
+                return [2 /*return*/];
+        }
+    });
+}); };
 exports.postForm = function (url, data, options) {
     if (options === void 0) { options = {}; }
-    return __awaiter(void 0, void 0, void 0, function () { return __generator(this, function (_a) {
-        return [2 /*return*/, exports.post(url, new FormData(data), options)];
-    }); });
+    return exports.post(url, new FormData(data), options);
 };
 exports.poll = function (url, rate, check) {
     if (rate === void 0) { rate = 200; }
