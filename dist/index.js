@@ -47,6 +47,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.poll = exports.postForm = exports.postJSON = exports.getJSON = exports.post = exports.get = exports.request = void 0;
 var requestRaw = function (method, url, options) {
     if (options === void 0) { options = {}; }
     return new Promise(function (res, rej) {
@@ -76,21 +77,23 @@ var requestRaw = function (method, url, options) {
         xhr.send(options.data);
     });
 };
-exports.request = function (method, url, options) {
+var request = function (method, url, options) {
     if (options === void 0) { options = {}; }
     return requestRaw(method, url, options)
-        .then(function (xhr) { return xhr.response || xhr.responseText; })
-        .catch(function (xhr) { return ({ status: xhr.status, statusText: xhr.statusText }); });
+        .then(function (xhr) { return xhr.response || xhr.responseText; });
 };
-exports.get = function (url, options) {
+exports.request = request;
+var get = function (url, options) {
     if (options === void 0) { options = {}; }
     return exports.request("GET", url, options);
 };
-exports.post = function (url, data, options) {
+exports.get = get;
+var post = function (url, data, options) {
     if (options === void 0) { options = {}; }
     return exports.request("POST", url, __assign(__assign({}, options), { data: data }));
 };
-exports.getJSON = function (url, options) {
+exports.post = post;
+var getJSON = function (url, options) {
     if (options === void 0) { options = {}; }
     return __awaiter(void 0, void 0, void 0, function () {
         var r;
@@ -110,28 +113,34 @@ exports.getJSON = function (url, options) {
         });
     });
 };
-exports.postJSON = function (url, data, options) { return __awaiter(void 0, void 0, void 0, function () {
-    var r;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, exports.post(url, JSON.stringify(data), __assign(__assign({}, options), { headers: __assign(__assign({}, (options.headers || {})), { "Content-Type": "application/json;charset=UTF-8" }) }))];
-            case 1:
-                r = _a.sent();
-                try {
-                    return [2 /*return*/, JSON.parse(r)];
-                }
-                catch (err) {
-                    return [2 /*return*/, r];
-                }
-                return [2 /*return*/];
-        }
+exports.getJSON = getJSON;
+var postJSON = function (url, data, options) {
+    if (options === void 0) { options = {}; }
+    return __awaiter(void 0, void 0, void 0, function () {
+        var r;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, exports.post(url, JSON.stringify(data), __assign(__assign({}, options), { headers: __assign(__assign({}, (options.headers || {})), { "Content-Type": "application/json;charset=UTF-8" }) }))];
+                case 1:
+                    r = _a.sent();
+                    try {
+                        return [2 /*return*/, JSON.parse(r)];
+                    }
+                    catch (err) {
+                        return [2 /*return*/, r];
+                    }
+                    return [2 /*return*/];
+            }
+        });
     });
-}); };
-exports.postForm = function (url, data, options) {
+};
+exports.postJSON = postJSON;
+var postForm = function (url, data, options) {
     if (options === void 0) { options = {}; }
     return exports.post(url, new FormData(data), options);
 };
-exports.poll = function (url, rate, check) {
+exports.postForm = postForm;
+var poll = function (url, rate, check) {
     if (rate === void 0) { rate = 200; }
     return new Promise(function (resolve, reject) { return __awaiter(void 0, void 0, void 0, function () {
         var done, res, err_1;
@@ -165,6 +174,7 @@ exports.poll = function (url, rate, check) {
         });
     }); });
 };
+exports.poll = poll;
 var pause = function (ms) {
     return new Promise(function (r) { return setTimeout(r, ms); });
 };

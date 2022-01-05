@@ -34,7 +34,6 @@ const requestRaw = (method: string, url: string, options: IXHROptions = {}) =>
 export const request = <T>(method: string, url: string, options: IXHROptions = {}): Promise<T> =>
   requestRaw(method, url, options)
     .then(xhr => xhr.response || xhr.responseText)
-    .catch(xhr => ({ status: xhr.status, statusText: xhr.statusText }))
 
 export const get = <T>(url: string, options: Omit<IXHROptions, "data"> = {}) =>
   request<T>("GET", url, options)
@@ -42,7 +41,7 @@ export const get = <T>(url: string, options: Omit<IXHROptions, "data"> = {}) =>
 export const post = <T>(url: string, data: Data, options: IXHROptions = {}) =>
   request<T>("POST", url, { ...options, data })
 
-export const getJSON = async <T>(url: string, options: IXHROptions = {}) : Promise<T | string> => {
+export const getJSON = async <T>(url: string, options: IXHROptions = {}): Promise<T | string> => {
   const r = await get<string>(url, { ...options, headers: { ...(options.headers || {}), "Content-Type": "application/json;charset=UTF-8" } })
   try {
     return JSON.parse(r)
@@ -51,7 +50,7 @@ export const getJSON = async <T>(url: string, options: IXHROptions = {}) : Promi
   }
 }
 
-export const postJSON = async <T extends Object, I extends Object>(url: string, data: I, options: Omit<IXHROptions, "data">): Promise<T | string> => {
+export const postJSON = async <T extends Object = {}, I extends Object = {}>(url: string, data: I, options: Omit<IXHROptions, "data"> = {}): Promise<T | string> => {
   const r = await post<string>(url, JSON.stringify(data), { ...options, headers: { ...(options.headers || {}), "Content-Type": "application/json;charset=UTF-8" } })
   try {
     return JSON.parse(r)
